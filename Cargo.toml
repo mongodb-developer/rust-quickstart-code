@@ -1,0 +1,9 @@
+[package]
+name = "rust_quickstart"
+version = "0.0.1"
+authors = ["Mark Smith <mark.smith@mongodb.com>"]
+edition = "2018"
+
+[dependencies]
+mongodb = "0.9.1"
+bson = "0.14.0"
