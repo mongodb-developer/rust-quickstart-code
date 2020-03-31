@@ -2,6 +2,7 @@ use bson::{doc, Bson};
 use chrono::TimeZone;
 use chrono::Utc;
 use mongodb;
+use serde::{Deserialize, Serialize};
 use std::env;
 
 fn main() -> Result<(), mongodb::error::Error> {
@@ -18,7 +19,7 @@ fn main() -> Result<(), mongodb::error::Error> {
         println!("- {}", name);
     }
 
-    // Get our 'movies' collection:
+    // Get the 'movies' collection from the 'sample_mflix' database:
     let movies = client.database("sample_mflix").collection("movies");
 
     let new_doc = doc! {
@@ -28,8 +29,7 @@ fn main() -> Result<(), mongodb::error::Error> {
         "released": Utc.ymd(2020, 2, 7).and_hms(0, 0, 0),
     };
     println!("New Document: {}", new_doc);
-
-    let insert_result = movies.insert_one(new_doc, None)?;
+    let insert_result = movies.insert_one(new_doc.clone(), None)?;
     println!("New document ID: {}", insert_result.inserted_id);
 
     // Look up one document:
@@ -41,7 +41,7 @@ fn main() -> Result<(), mongodb::error::Error> {
             None,
         )?
         .expect("Missing 'Parasite' document.");
-    println!("Movie: {}", Bson::from(movie));
+    println!("Movie: {}", movie);
 
     // Update the document:
     let update_result = movies.update_one(
@@ -64,7 +64,7 @@ fn main() -> Result<(), mongodb::error::Error> {
             None,
         )?
         .expect("Missing 'Parasite' document.");
-    println!("Updated Movie: {}", Bson::from(movie));
+    println!("Updated Movie: {}", &movie);
 
     // Delete all documents for movies called "Parasite":
     let delete_result = movies.delete_many(
@@ -74,6 +74,55 @@ fn main() -> Result<(), mongodb::error::Error> {
         None,
     )?;
     println!("Deleted {} documents", delete_result.deleted_count);
+
+    // Working with Document is a bit horrible:
+    if let Some(title) = new_doc.get("title").and_then(Bson::as_str) {
+        println!("title: {}", title);
+    } else {
+        println!("no title found");
+    }
+
+    // We can use `serde` to create structs which can serialize & deserialize between BSON:
+    #[derive(Serialize, Deserialize, Debug)]
+    struct Movie {
+        #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
+        id: Option<bson::oid::ObjectId>,
+        title: String,
+        year: i32,
+    }
+
+    // Insert a serialized struct into MongoDB:
+    let captain_marvel = Movie {
+        id: None,
+        title: "Captain Marvel".to_owned(),
+        year: 2019,
+    };
+
+    // Convert `captain_marvel` to a Bson instance:
+    let serialized_movie = bson::to_bson(&captain_marvel)?;
+    if let Bson::Document(document) = serialized_movie {
+        let insert_result = movies.insert_one(document, None)?;
+        if let Bson::ObjectId(inserted_id) = insert_result.inserted_id {
+            let captain_marvel_id = inserted_id;
+            println!("Captain Marvel document ID: {:?}", &captain_marvel_id);
+
+            // Retrieve Captain Marvel from the database, into a Movie struct:
+            // Read the document from the movies collection:
+            let loaded_movie = movies
+                .find_one(Some(doc! { "_id":  captain_marvel_id.clone() }), None)?
+                .expect("Document not found");
+
+            // Deserialize the document into a Movie instance
+            let loaded_movie_struct: Movie = bson::from_bson(bson::Bson::Document(loaded_movie))?;
+            println!("Movie loaded from collection: {:?}", loaded_movie_struct);
+
+            // Delete Captain Marvel from MongoDB:
+            movies.delete_one(doc! {"_id": Bson::ObjectId(captain_marvel_id)}, None)?;
+            println!("Captain Marvel document deleted.");
+        }
+    } else {
+        panic!("Could not convert the Movie struct into a BSON document!");
+    }
 
     Ok(())
 }
