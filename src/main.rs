@@ -1,8 +1,8 @@
 use bson::{doc, Bson};
+use chrono::TimeZone;
+use chrono::Utc;
 use mongodb;
 use std::env;
-use chrono::Utc;
-use chrono::TimeZone;
 
 fn main() -> Result<(), mongodb::error::Error> {
     // Load the MongoDB connection string from an environment variable:
@@ -33,23 +33,47 @@ fn main() -> Result<(), mongodb::error::Error> {
     println!("New document ID: {}", insert_result.inserted_id);
 
     // Look up one document:
-    let movie: bson::Document = movies.find_one(doc!{
-        "title": "Parasite"
-    }, None)?.expect("Missing 'Parasite' document.");
+    let movie = movies
+        .find_one(
+            doc! {
+                "title": "Parasite"
+            },
+            None,
+        )?
+        .expect("Missing 'Parasite' document.");
     println!("Movie: {}", Bson::from(movie));
 
-    // // Look up one document:
-    // match movies.find_one(doc!{
-    //     "year": "The Great Train Robbery"
-    // }, None).expect("Error retrieving 'The Great Train Robbery'") {
-    //     None => println!("Missing 'The Great Train Robbery' document."),
-    //     Some(movie) => {
-    //         println!("Movie: {}", movie.get("title").unwrap());
-    //         println!("Year: {}", movie.get("year").unwrap());
-    //     }
-    // };
+    // Update the document:
+    let update_result = movies.update_one(
+        doc! {
+            "_id": &insert_result.inserted_id,
+        },
+        doc! {
+            "$set": { "year": 2019 }
+        },
+        None,
+    )?;
+    println!("Updated {} documents", update_result.modified_count);
 
-    // movies.update_one(doc!{"_id": insert_result.inserted_id}, update: impl Into<UpdateModifications>, None)
+    // Look up the document again to confirm it's been updated:
+    let movie = movies
+        .find_one(
+            doc! {
+                "_id": &insert_result.inserted_id,
+            },
+            None,
+        )?
+        .expect("Missing 'Parasite' document.");
+    println!("Updated Movie: {}", Bson::from(movie));
+
+    // Delete all documents for movies called "Parasite":
+    let delete_result = movies.delete_many(
+        doc! {
+            "title": "Parasite"
+        },
+        None,
+    )?;
+    println!("Deleted {} documents", delete_result.deleted_count);
 
     Ok(())
 }
