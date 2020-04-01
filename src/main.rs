@@ -100,29 +100,28 @@ fn main() -> Result<(), mongodb::error::Error> {
 
     // Convert `captain_marvel` to a Bson instance:
     let serialized_movie = bson::to_bson(&captain_marvel)?;
-    if let Bson::Document(document) = serialized_movie {
-        let insert_result = movies.insert_one(document, None)?;
-        if let Bson::ObjectId(inserted_id) = insert_result.inserted_id {
-            let captain_marvel_id = inserted_id;
-            println!("Captain Marvel document ID: {:?}", &captain_marvel_id);
+    let document = serialized_movie.as_document().unwrap();
+    let insert_result = movies.insert_one(document.to_owned(), None)?;
+    let inserted_id = insert_result
+        .inserted_id
+        .as_object_id()
+        .expect("Retrieved _id should have been of type ObjectId");
+    let captain_marvel_id = inserted_id;
+    println!("Captain Marvel document ID: {:?}", &captain_marvel_id);
 
-            // Retrieve Captain Marvel from the database, into a Movie struct:
-            // Read the document from the movies collection:
-            let loaded_movie = movies
-                .find_one(Some(doc! { "_id":  captain_marvel_id.clone() }), None)?
-                .expect("Document not found");
+    // Retrieve Captain Marvel from the database, into a Movie struct:
+    // Read the document from the movies collection:
+    let loaded_movie = movies
+        .find_one(Some(doc! { "_id":  captain_marvel_id.clone() }), None)?
+        .expect("Document not found");
 
-            // Deserialize the document into a Movie instance
-            let loaded_movie_struct: Movie = bson::from_bson(bson::Bson::Document(loaded_movie))?;
-            println!("Movie loaded from collection: {:?}", loaded_movie_struct);
+    // Deserialize the document into a Movie instance
+    let loaded_movie_struct: Movie = bson::from_bson(Bson::Document(loaded_movie))?;
+    println!("Movie loaded from collection: {:?}", loaded_movie_struct);
 
-            // Delete Captain Marvel from MongoDB:
-            movies.delete_one(doc! {"_id": Bson::ObjectId(captain_marvel_id)}, None)?;
-            println!("Captain Marvel document deleted.");
-        }
-    } else {
-        panic!("Could not convert the Movie struct into a BSON document!");
-    }
+    // Delete Captain Marvel from MongoDB:
+    movies.delete_one(doc! {"_id": captain_marvel_id.to_owned()}, None)?;
+    println!("Captain Marvel document deleted.");
 
     Ok(())
 }
