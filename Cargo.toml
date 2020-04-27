@@ -5,7 +5,8 @@ authors = ["Mark Smith <mark.smith@mongodb.com>"]
 edition = "2018"
 
 [dependencies]
-mongodb = "0.9.1"
+mongodb = { git = "https://github.com/mongodb/mongo-rust-driver.git" }
 bson = "0.14.0"
 chrono = "0.4.11"
 serde = "1.0.105"
+async-std = { version = "1.5.0", features = ["attributes"] }
