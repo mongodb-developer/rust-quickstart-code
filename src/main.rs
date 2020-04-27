@@ -19,7 +19,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     // Print the databases in our MongoDB cluster:
     println!("Databases:");
-    for name in client.list_database_names(None).await? {
+    for name in client.list_database_names(None, None).await? {
         println!("- {}", name);
     }
 
