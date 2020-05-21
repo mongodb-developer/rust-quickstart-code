@@ -5,9 +5,8 @@ use mongodb;
 use serde::{Deserialize, Serialize};
 use std::env;
 use std::error::Error;
-use async_std;
 use serde_json;
-
+use async_std;
 
 #[async_std::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -51,8 +50,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // -> "Parasite"
     println!("Movie Title: {}", title);
 
-let movie_json: serde_json::Value = Bson::from(movie.clone()).into();
-println!("JSON: {}", movie_json);
+    let movie_json: serde_json::Value = Bson::from(movie).into();
+    println!("JSON: {}", movie_json);
 
     // Update the document:
     let update_result = movies.update_one(
