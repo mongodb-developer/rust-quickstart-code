@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 use std::env;
 use std::error::Error;
 use async_std;
+use serde_json;
 
 
 #[async_std::main]
@@ -46,6 +47,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
         ).await?
         .expect("Missing 'Parasite' document.");
     println!("Movie: {}", movie);
+    let title = movie.get("title").expect("No title found").as_str().expect("title should have been a string!");
+    // -> "Parasite"
+    println!("Movie Title: {}", title);
+
+let movie_json: serde_json::Value = Bson::from(movie.clone()).into();
+println!("JSON: {}", movie_json);
 
     // Update the document:
     let update_result = movies.update_one(
@@ -87,13 +94,13 @@ async fn main() -> Result<(), Box<dyn Error>> {
     }
 
     // We can use `serde` to create structs which can serialize & deserialize between BSON:
-    #[derive(Serialize, Deserialize, Debug)]
-    struct Movie {
-        #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
-        id: Option<bson::oid::ObjectId>,
-        title: String,
-        year: i32,
-    }
+#[derive(Serialize, Deserialize, Debug)]
+struct Movie {
+    #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
+    id: Option<bson::oid::ObjectId>,
+    title: String,
+    year: i32,
+}
 
     // Initialize struct to be inserted:
     let captain_marvel = Movie {
@@ -121,7 +128,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .expect("Document not found");
 
     // Deserialize the document into a Movie instance
-    let loaded_movie_struct: Movie = bson::from_bson(Bson::Document(loaded_movie))?;
+    let loaded_movie_struct: Movie = bson::from_bson(loaded_movie.into())?;
     println!("Movie loaded from collection: {:?}", loaded_movie_struct);
 
     // Delete Captain Marvel from MongoDB:

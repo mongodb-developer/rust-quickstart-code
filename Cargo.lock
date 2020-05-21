@@ -725,8 +725,9 @@ dependencies = [
 
 [[package]]
 name = "mongodb"
-version = "0.9.1"
-source = "git+https://github.com/mongodb/mongo-rust-driver.git#1e178496672dc1bf4d313e4f2b7f8d694d16f0c4"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9231cc6884a51ecad604342df6bf166eb41e742de09fb6107dc7f02dedafd37a"
 dependencies = [
  "async-std",
  "async-trait",
@@ -1067,6 +1068,7 @@ dependencies = [
  "chrono",
  "mongodb",
  "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -1143,9 +1145,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.51"
+version = "1.0.53"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "da07b57ee2623368351e9a0488bb0b261322a15a6e0ae53e243cbdc0f4208da9"
+checksum = "993948e75b189211a9b31a7528f950c6adc21f9720b6438ff80a7fa2f864cea2"
 dependencies = [
  "indexmap",
  "itoa",
