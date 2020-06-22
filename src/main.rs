@@ -1,4 +1,3 @@
-use async_std;
 use bson::{doc, Bson};
 use chrono::TimeZone;
 use chrono::Utc;
@@ -8,18 +7,17 @@ use serde_json;
 use std::env;
 use std::error::Error;
 
-#[async_std::main]
-async fn main() -> Result<(), Box<dyn Error>> {
+fn main() -> Result<(), Box<dyn Error>> {
     // Load the MongoDB connection string from an environment variable:
     let client_uri =
         env::var("MONGODB_URI").expect("You must set the MONGODB_URI environment var!");
 
     // A Client is needed to connect to MongoDB:
-    let client = mongodb::Client::with_uri_str(client_uri.as_ref()).await?;
+    let client = mongodb::sync::Client::with_uri_str(client_uri.as_ref())?;
 
     // Print the databases in our MongoDB cluster:
     println!("Databases:");
-    for name in client.list_database_names(None, None).await? {
+    for name in client.list_database_names(None, None)? {
         println!("- {}", name);
     }
 
@@ -33,7 +31,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         "released": Utc.ymd(2020, 2, 7).and_hms(0, 0, 0),
     };
     println!("New Document: {}", new_doc);
-    let insert_result = movies.insert_one(new_doc.clone(), None).await?;
+    let insert_result = movies.insert_one(new_doc.clone(), None)?;
     println!("New document ID: {}", insert_result.inserted_id);
 
     // Look up one document:
@@ -44,7 +42,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
             },
             None,
         )
-        .await?
+        ?
         .expect("Missing 'Parasite' document.");
     println!("Movie: {}", movie);
     let title = movie
@@ -69,7 +67,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
             },
             None,
         )
-        .await?;
+        ?;
     println!("Updated {} documents", update_result.modified_count);
 
     // Look up the document again to confirm it's been updated:
@@ -80,7 +78,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
             },
             None,
         )
-        .await?
+        ?
         .expect("Missing 'Parasite' document.");
     println!("Updated Movie: {}", &movie);
 
@@ -92,7 +90,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
             },
             None,
         )
-        .await?;
+        ?;
     println!("Deleted {} documents", delete_result.deleted_count);
 
     // Working with Document is a bit horrible:
@@ -123,7 +121,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let document = serialized_movie.as_document().unwrap();
 
     // Insert into the collection and extract the inserted_id value:
-    let insert_result = movies.insert_one(document.to_owned(), None).await?;
+    let insert_result = movies.insert_one(document.to_owned(), None)?;
     let captain_marvel_id = insert_result
         .inserted_id
         .as_object_id()
@@ -134,7 +132,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // Read the document from the movies collection:
     let loaded_movie = movies
         .find_one(Some(doc! { "_id":  captain_marvel_id.clone() }), None)
-        .await?
+        ?
         .expect("Document not found");
 
     // Deserialize the document into a Movie instance
@@ -144,7 +142,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // Delete Captain Marvel from MongoDB:
     movies
         .delete_one(doc! {"_id": captain_marvel_id.to_owned()}, None)
-        .await?;
+        ?;
     println!("Captain Marvel document deleted.");
 
     Ok(())
