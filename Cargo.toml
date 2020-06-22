@@ -5,11 +5,9 @@ authors = ["Mark Smith <mark.smith@mongodb.com>"]
 edition = "2018"
 
 [dependencies]
-#mongodb = { version = "1.0.0", default-features = false, features=["async-std-runtime"] }
 mongodb = { version = "1.0.0" }
 tokio = "0.2.19"
 bson = "1.0.0"
 chrono = "0.4.11"
 serde = "1.0.105"
-#async-std = { version = "1.5.0", features = ["attributes"] }
 serde_json = "1.0.53"
