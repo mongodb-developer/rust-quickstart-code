@@ -1,15 +1,16 @@
+use tokio;
 use bson::{doc, Bson};
 use chrono::TimeZone;
 use chrono::Utc;
 use mongodb;
 use serde::{Deserialize, Serialize};
+use serde_json;
 use std::env;
 use std::error::Error;
-use serde_json;
-use async_std;
 
-#[async_std::main]
+#[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
+    println!("Starting");
     // Load the MongoDB connection string from an environment variable:
     let client_uri =
         env::var("MONGODB_URI").expect("You must set the MONGODB_URI environment var!");
@@ -43,10 +44,15 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 "title": "Parasite"
             },
             None,
-        ).await?
+        )
+        .await?
         .expect("Missing 'Parasite' document.");
     println!("Movie: {}", movie);
-    let title = movie.get("title").expect("No title found").as_str().expect("title should have been a string!");
+    let title = movie
+        .get("title")
+        .expect("No title found")
+        .as_str()
+        .expect("title should have been a string!");
     // -> "Parasite"
     println!("Movie Title: {}", title);
 
@@ -54,15 +60,17 @@ async fn main() -> Result<(), Box<dyn Error>> {
     println!("JSON: {}", movie_json);
 
     // Update the document:
-    let update_result = movies.update_one(
-        doc! {
-            "_id": &insert_result.inserted_id,
-        },
-        doc! {
-            "$set": { "year": 2019 }
-        },
-        None,
-    ).await?;
+    let update_result = movies
+        .update_one(
+            doc! {
+                "_id": &insert_result.inserted_id,
+            },
+            doc! {
+                "$set": { "year": 2019 }
+            },
+            None,
+        )
+        .await?;
     println!("Updated {} documents", update_result.modified_count);
 
     // Look up the document again to confirm it's been updated:
@@ -72,17 +80,20 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 "_id": &insert_result.inserted_id,
             },
             None,
-        ).await?
+        )
+        .await?
         .expect("Missing 'Parasite' document.");
     println!("Updated Movie: {}", &movie);
 
     // Delete all documents for movies called "Parasite":
-    let delete_result = movies.delete_many(
-        doc! {
-            "title": "Parasite"
-        },
-        None,
-    ).await?;
+    let delete_result = movies
+        .delete_many(
+            doc! {
+                "title": "Parasite"
+            },
+            None,
+        )
+        .await?;
     println!("Deleted {} documents", delete_result.deleted_count);
 
     // Working with Document is a bit horrible:
@@ -93,13 +104,13 @@ async fn main() -> Result<(), Box<dyn Error>> {
     }
 
     // We can use `serde` to create structs which can serialize & deserialize between BSON:
-#[derive(Serialize, Deserialize, Debug)]
-struct Movie {
-    #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
-    id: Option<bson::oid::ObjectId>,
-    title: String,
-    year: i32,
-}
+    #[derive(Serialize, Deserialize, Debug)]
+    struct Movie {
+        #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
+        id: Option<bson::oid::ObjectId>,
+        title: String,
+        year: i32,
+    }
 
     // Initialize struct to be inserted:
     let captain_marvel = Movie {
@@ -123,7 +134,8 @@ struct Movie {
     // Retrieve Captain Marvel from the database, into a Movie struct:
     // Read the document from the movies collection:
     let loaded_movie = movies
-        .find_one(Some(doc! { "_id":  captain_marvel_id.clone() }), None).await?
+        .find_one(Some(doc! { "_id":  captain_marvel_id.clone() }), None)
+        .await?
         .expect("Document not found");
 
     // Deserialize the document into a Movie instance
@@ -131,7 +143,9 @@ struct Movie {
     println!("Movie loaded from collection: {:?}", loaded_movie_struct);
 
     // Delete Captain Marvel from MongoDB:
-    movies.delete_one(doc! {"_id": captain_marvel_id.to_owned()}, None).await?;
+    movies
+        .delete_one(doc! {"_id": captain_marvel_id.to_owned()}, None)
+        .await?;
     println!("Captain Marvel document deleted.");
 
     Ok(())
