@@ -6,7 +6,6 @@ edition = "2018"
 
 [dependencies]
 mongodb = { version = "1.0.0", default-features = false, features=["async-std-runtime"] }
-bson = "1.0.0"
 chrono = "0.4.11"
 serde = "1.0.105"
 async-std = { version = "1.5.0", features = ["attributes"] }

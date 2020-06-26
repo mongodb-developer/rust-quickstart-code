@@ -1,10 +1,7 @@
 use async_std;
-use bson::{doc, Bson};
-use chrono::TimeZone;
-use chrono::Utc;
-use mongodb;
+use chrono::{TimeZone, Utc};
+use mongodb::bson::{self, doc, Bson};
 use serde::{Deserialize, Serialize};
-use serde_json;
 use std::env;
 use std::error::Error;
 
@@ -47,11 +44,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .await?
         .expect("Missing 'Parasite' document.");
     println!("Movie: {}", movie);
-    let title = movie
-        .get("title")
-        .expect("No title found")
-        .as_str()
-        .expect("title should have been a string!");
+    let title = movie.get_str("title")?;
     // -> "Parasite"
     println!("Movie Title: {}", title);
 
@@ -96,7 +89,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     println!("Deleted {} documents", delete_result.deleted_count);
 
     // Working with Document is a bit horrible:
-    if let Some(title) = new_doc.get("title").and_then(Bson::as_str) {
+    if let Ok(title) = new_doc.get_str("title") {
         println!("title: {}", title);
     } else {
         println!("no title found");
