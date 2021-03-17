@@ -81,7 +81,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let mut results = movies.aggregate(pipeline, None).await?;
     // Loop through the results, convert them to a MovieSummary, and then print out.
     while let Some(result) = results.next().await {
-        let doc: MovieSummary = bson::from_bson(result?.into())?;
+        let doc: MovieSummary = bson::from_document(result?)?;
         println!("* {}", doc);
     }
 
@@ -110,7 +110,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let mut results = movies.aggregate(pipeline, None).await?;
     // Loop through the results (there will only be one), and print the year:
     while let Some(result) = results.next().await {
-        let doc: MovieSummary = bson::from_bson(result?.into())?;
+        let doc: MovieSummary = bson::from_document(result?)?;
         println!("* {}", doc);
     }
 
@@ -158,7 +158,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let mut results = movies.aggregate(pipeline, None).await?;
     // Loop through the results and print a summary and the comments:
     while let Some(result) = results.next().await {
-        let doc: MovieSummary = bson::from_bson(result?.into())?;
+        let doc: MovieSummary = bson::from_document(result?)?;
         println!("* {}", doc);
         if doc.comments.len() > 0 {
             // Print a max of 5 comments per movie:
@@ -217,7 +217,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let mut results = movies.aggregate(pipeline, None).await?;
     // Loop through the results and print a summary and the comments:
     while let Some(result) = results.next().await {
-        let doc: YearSummary = bson::from_bson(result?.into())?;
+        let doc: YearSummary = bson::from_document(result?)?;
         println!("* {:?}", doc);
     }
 
