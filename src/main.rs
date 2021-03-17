@@ -1,5 +1,6 @@
 use chrono::{TimeZone, Utc};
 use mongodb::bson::{self, doc, Bson};
+use mongodb::options::{ClientOptions, ResolverConfig};
 use serde::{Deserialize, Serialize};
 use std::env;
 use std::error::Error;
@@ -11,8 +12,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let client_uri =
         env::var("MONGODB_URI").expect("You must set the MONGODB_URI environment var!");
 
-    // A Client is needed to connect to MongoDB:
-    let client = mongodb::Client::with_uri_str(client_uri.as_ref()).await?;
+    // An extra line of code to work around a DNS issue on Windows:
+    let options =
+        ClientOptions::parse_with_resolver_config(&client_uri, ResolverConfig::cloudflare())
+            .await?;
+    let client = mongodb::Client::with_options(options)?;
 
     // Print the databases in our MongoDB cluster:
     println!("Databases:");
