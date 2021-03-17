@@ -16,6 +16,18 @@ struct MovieSummary {
     comments: Vec<Comment>,
 }
 
+impl fmt::Display for MovieSummary {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}, {}, {}",
+            self.title,
+            self.cast.get(0).unwrap_or(&"- no cast -".to_owned()),
+            self.year
+        )
+    }
+}
+
 #[derive(Debug, Deserialize)]
 struct Comment {
     email: String,
@@ -31,18 +43,6 @@ struct YearSummary {
     movie_count: i64,
     #[serde(default)]
     movie_titles: Vec<String>,
-}
-
-impl fmt::Display for MovieSummary {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{}, {}, {}",
-            self.title,
-            self.cast.get(0).unwrap_or(&"- no cast -".to_owned()),
-            self.year
-        )
-    }
 }
 
 #[tokio::main]
