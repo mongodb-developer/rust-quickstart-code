@@ -1,12 +1,20 @@
 [package]
 name = "rust_quickstart"
-version = "0.0.2"
-authors = ["Mark Smith <mark.smith@mongodb.com>"]
-edition = "2018"
+version = "0.0.3"
+authors = ["Mark Smith <mark.smith@mongodb.com>", "Jorge Ortiz-Fuentes <jorge.ortiz-fuentes@mongodb.com>"]
+edition = "2021"
 
 [dependencies]
-mongodb = { version = "1.2.0" }
-tokio = "0.2.19"
-chrono = "0.4.11"
-serde = "1.0.105"
-serde_json = "1.0.53"
+# Uncomment for working with async-std
+#async-std = "1"
+#mongodb = { version = "2", default-features = false, features = ["async-std-runtime"] }
+# Uncoment for working with tokio
+mongodb = "2.1"
+# Uncomment for working with the sychronous version
+#mongodb = { version = "2", default-features = false, features = ["sync"] }
+
+bson = { version = "2", features = ["chrono-0_4"] } # Needed for using chrono datetime in doc
+tokio = "1"
+chrono = "0.4" # Used for setting DateTimes
+serde = "1" # Used in the Map Data into Structs section
+serde_json = "1"
