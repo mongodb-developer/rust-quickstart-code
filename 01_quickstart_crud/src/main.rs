@@ -1,6 +1,6 @@
 use chrono::{TimeZone, Utc};
-use mongodb::bson::{self, doc, Bson};
-use mongodb::options::{ClientOptions, ResolverConfig};
+use mongodb::{Client, options::{ClientOptions, ResolverConfig}};
+use mongodb::bson::{Bson, Document, doc, oid::ObjectId};
 use serde::{Deserialize, Serialize};
 use std::env;
 use std::error::Error;
@@ -16,7 +16,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let options =
         ClientOptions::parse_with_resolver_config(&client_uri, ResolverConfig::cloudflare())
             .await?;
-    let client = mongodb::Client::with_options(options)?;
+    let client = Client::with_options(options)?;
 
     // Print the databases in our MongoDB cluster:
     println!("Databases:");
@@ -38,7 +38,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     println!("New document ID: {}", insert_result.inserted_id);
 
     // Look up one document:
-    let movie = movies
+    let movie: Document = movies
         .find_one(
             doc! {
                 "title": "Parasite"
@@ -52,14 +52,14 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // -> "Parasite"
     println!("Movie Title: {}", title);
 
-    let movie_json: serde_json::Value = Bson::from(movie).into();
+    let movie_json: serde_json::Value = Bson::from(movie.clone()).into();
     println!("JSON: {}", movie_json);
 
     // Update the document:
     let update_result = movies
         .update_one(
             doc! {
-                "_id": &insert_result.inserted_id,
+		"_id": &movie.get("_id")
             },
             doc! {
                 "$set": { "year": 2019 }
@@ -73,7 +73,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let movie = movies
         .find_one(
             doc! {
-                "_id": &insert_result.inserted_id,
+		"_id": &movie.get("_id")
             },
             None,
         )
@@ -103,9 +103,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
     #[derive(Serialize, Deserialize, Debug)]
     struct Movie {
         #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
-        id: Option<bson::oid::ObjectId>,
+        id: Option<ObjectId>,
         title: String,
         year: i32,
+        plot: String,
+        #[serde(with = "bson::serde_helpers::chrono_datetime_as_bson_datetime")]
+        released: chrono::DateTime<Utc>,
     }
 
     // Initialize struct to be inserted:
@@ -113,6 +116,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
         id: None,
         title: "Captain Marvel".to_owned(),
         year: 2019,
+        plot: "Amidst a mission, Vers, a Kree warrior, gets separated from her team and is stranded on Earth. However, her life takes an unusual turn after she teams up with Fury, a S.H.I.E.L.D. agent.".to_owned(),
+        released: Utc.ymd(2019,3,8).and_hms(0,0,0)
     };
 
     // Convert `captain_marvel` to a Bson instance:
