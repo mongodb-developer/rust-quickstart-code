@@ -1,11 +1,12 @@
-use mongodb::bson::{self, doc};
+use mongodb::{Cursor, Collection};
+use mongodb::bson::{self, doc, Document};
 use mongodb::options::{ClientOptions, ResolverConfig};
 use serde::Deserialize;
 use std::env;
 use std::error::Error;
 use std::fmt;
 use tokio;
-use tokio::stream::StreamExt;
+use futures::stream::TryStreamExt;
 
 #[derive(Deserialize)]
 struct MovieSummary {
@@ -58,7 +59,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let client = mongodb::Client::with_options(options)?;
 
     // Get the 'movies' collection from the 'sample_mflix' database:
-    let movies = client.database("sample_mflix").collection("movies");
+    let movies: Collection<Document> = client.database("sample_mflix").collection("movies");
 
     // -----------------------------------------------------------------------
     println!("A Star is Born, Sorted by Year:");
@@ -78,13 +79,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
     ];
 
     // Look up "A Star is Born" in ascending year order:
-    let mut results = movies.aggregate(pipeline, None).await?;
+    let mut results: Cursor<Document> = movies.aggregate(pipeline, None).await?;
     // Loop through the results, convert them to a MovieSummary, and then print out.
-    while let Some(result) = results.next().await {
-        let doc: MovieSummary = bson::from_document(result?)?;
+    while let Some(result) = results.try_next().await? {
+        let doc: MovieSummary = bson::from_document(result)?;
         println!("* {}", doc);
     }
-
     // -----------------------------------------------------------------------
     println!("Most Recent Production:");
 
@@ -109,8 +109,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let mut results = movies.aggregate(pipeline, None).await?;
     // Loop through the results (there will only be one), and print the year:
-    while let Some(result) = results.next().await {
-        let doc: MovieSummary = bson::from_document(result?)?;
+    while let Some(result) = results.try_next().await? {
+        let doc: MovieSummary = bson::from_document(result)?;
         println!("* {}", doc);
     }
 
@@ -157,8 +157,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let mut results = movies.aggregate(pipeline, None).await?;
     // Loop through the results and print a summary and the comments:
-    while let Some(result) = results.next().await {
-        let doc: MovieSummary = bson::from_document(result?)?;
+    while let Some(result) = results.try_next().await? {
+        let doc: MovieSummary = bson::from_document(result)?;
         println!("* {}", doc);
         if doc.comments.len() > 0 {
             // Print a max of 5 comments per movie:
@@ -216,8 +216,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // Loop through the 'year-summary' documents:
     let mut results = movies.aggregate(pipeline, None).await?;
     // Loop through the results and print a summary and the comments:
-    while let Some(result) = results.next().await {
-        let doc: YearSummary = bson::from_document(result?)?;
+    while let Some(result) = results.try_next().await? {
+        let doc: YearSummary = bson::from_document(result)?;
         println!("* {:?}", doc);
     }
 

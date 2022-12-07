@@ -8,8 +8,8 @@ edition = "2021"
 # Uncomment for working with async-std
 #async-std = "1"
 #mongodb = { version = "2", default-features = false, features = ["async-std-runtime"] }
-# Uncoment for working with tokio
-mongodb = "2.1"
+# Uncomment for working with tokio
+mongodb = "2"
 # Uncomment for working with the sychronous version
 #mongodb = { version = "2", default-features = false, features = ["sync"] }
 
