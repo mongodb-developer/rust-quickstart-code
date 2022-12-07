@@ -1,4 +1,4 @@
-use chrono::{TimeZone, Utc};
+use chrono::{Utc, DateTime, NaiveDate};
 use mongodb::{Client, options::{ClientOptions, ResolverConfig}};
 use mongodb::bson::{Bson, Document, doc, oid::ObjectId};
 use serde::{Deserialize, Serialize};
@@ -31,7 +31,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         "title": "Parasite",
         "year": 2020,
         "plot": "A poor family, the Kims, con their way into becoming the servants of a rich family, the Parks. But their easy life gets complicated when their deception is threatened with exposure.",
-        "released": Utc.ymd(2020, 2, 7).and_hms(0, 0, 0),
+        "released": dt_from_utc(2020, 2, 7, 0, 0, 0)
     };
     println!("New Document: {}", new_doc);
     let insert_result = movies.insert_one(new_doc.clone(), None).await?;
@@ -117,7 +117,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         title: "Captain Marvel".to_owned(),
         year: 2019,
         plot: "Amidst a mission, Vers, a Kree warrior, gets separated from her team and is stranded on Earth. However, her life takes an unusual turn after she teams up with Fury, a S.H.I.E.L.D. agent.".to_owned(),
-        released: Utc.ymd(2019,3,8).and_hms(0,0,0)
+        released: dt_from_utc(2019, 3, 8, 0, 0, 0)
     };
 
     // Convert `captain_marvel` to a Bson instance:
@@ -150,4 +150,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
     println!("Captain Marvel document deleted.");
 
     Ok(())
+}
+
+fn dt_from_utc(year: i32, month: u32, day: u32, hour: u32, minute: u32, second: u32) -> DateTime<Utc> {
+    DateTime::<Utc>::from_utc(NaiveDate::from_ymd_opt(year,month,day).unwrap().and_hms_opt(hour,minute,second).unwrap(), Utc)
 }
